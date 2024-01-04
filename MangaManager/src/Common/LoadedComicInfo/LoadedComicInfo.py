@@ -156,7 +156,7 @@ class LoadedComicInfo(LoadedFileMetadata, LoadedFileCoverData, ILoadedComicInfo)
                 if self.rar_bin is None:
                     os.system(f"rar a '{self.file_path}' {COMICINFO_FILE}")
                 else:
-                    os.system(f"& '{self.rar_bin}' a '{self.file_path}' {COMICINFO_FILE}")
+                    os.system(f'"{self.rar_bin}" a "{self.file_path}" {COMICINFO_FILE}')
                 os.remove(COMICINFO_FILE)
 
                 with ArchiveFile(self.file_path, 'r') as tmp_archive:
@@ -175,7 +175,7 @@ class LoadedComicInfo(LoadedFileMetadata, LoadedFileCoverData, ILoadedComicInfo)
                 if self.rar_bin is None:
                     os.system(f"rar a '{self.file_path}' {COMICINFO_FILE}")
                 else:
-                    os.system(f"& '{self.rar_bin}' a '{self.file_path}' {COMICINFO_FILE}")
+                    os.system(f'"{self.rar_bin}" a "{self.file_path}" {COMICINFO_FILE}')
             os.remove(COMICINFO_FILE)
 
             with ArchiveFile(self.file_path, 'r') as tmp_archive:
