@@ -131,85 +131,123 @@ class LoadedComicInfo(LoadedFileMetadata, LoadedFileCoverData, ILoadedComicInfo)
     # ACTUAL LOGIC
     def _process(self, write_metadata=False, do_convert_to_webp=False, **_):
         logger.info(f"[{'PROCESSING':13s}] Processing file '{self.file_path}'")
+        
+        ext = os.path.splitext(self.file_path)[1].lower()
+        if ext in ('.cbr', '.rar'):
+            is_cbr = True
+            logger.info(f"[{'Processing':13s}]  File is cbr")
+
         if write_metadata and not do_convert_to_webp and not self.has_metadata:
-            with zipfile.ZipFile(self.file_path, mode='a', compression=zipfile.ZIP_STORED) as zf:
-                # We finally append our new ComicInfo file
-                zf.writestr(COMICINFO_FILE, self._export_metadata())
+            if not is_cbr:
+                with zipfile.ZipFile(self.file_path, mode='a', compression=zipfile.ZIP_STORED) as zf:
+                    # We finally append our new ComicInfo file
+                    zf.writestr(COMICINFO_FILE, self._export_metadata())
+                    logger.debug(f"[{_LOG_TAG_WRITE_META:13s}] New ComicInfo.xml appended to the file",
+                                extra=self._logging_extra)
+            else:
+                with open(COMICINFO_FILE, 'w', newline="\n") as tmp_comicinfo:
+                    tmp_comicinfo.write(self._export_metadata())
+                # subprocess.call(f"rar a '{self.file_path}' {COMICINFO_FILE}", shell = True)
+                os.system(f"rar a '{self.file_path}' {COMICINFO_FILE}")
+                os.remove(COMICINFO_FILE)
+
+                with ArchiveFile(self.file_path, 'r') as tmp_archive:
+                    comicfile_not_appended = COMICINFO_FILE not in tmp_archive.namelist()
+                if comicfile_not_appended:
+                    raise ValueError(f"Falied to append {COMICINFO_FILE} to {self.file_path}")
+
                 logger.debug(f"[{_LOG_TAG_WRITE_META:13s}] New ComicInfo.xml appended to the file",
-                               extra=self._logging_extra)
+                                extra=self._logging_extra)
             self.has_metadata = True
 
-        # Creates a tempfile in the directory the original file is at
-        tmpfd, tmpname = tempfile.mkstemp(dir=os.path.dirname(self.file_path))
-        os.close(tmpfd)
-        has_cover_action = self.cover_action not in (CoverActions.RESET, None) or self.backcover_action not in (
-            CoverActions.RESET, None)
-        original_size = os.path.getsize(self.file_path)
-        with ArchiveFile(self.file_path, 'r') as zin:
-            initial_file_count = len(zin.namelist())
-            for s in zin.infolist():
-                if s.file_size != 0:
-                    orig_comp_type = s.compress_type
-                    break
-            with zipfile.ZipFile(tmpname, "w",compression=orig_comp_type) as zout:  # The temp file where changes will be saved to
-                self._recompress(zin, zout, write_metadata=write_metadata, do_convert_webp=do_convert_to_webp)
-            newfile_size = os.path.getsize(tmpname)
+        elif is_cbr and write_metadata and self.has_metadata:
+            with open(COMICINFO_FILE, 'w', newline="\n") as tmp_comicinfo:
+                tmp_comicinfo.write(self._export_metadata())
+            # subprocess.call(f"rar a '{self.file_path}' {COMICINFO_FILE}", shell = True)
+            os.system(f"rar a '{self.file_path}' {COMICINFO_FILE}")
+            os.remove(COMICINFO_FILE)
 
-            # If the new file is smaller than the original file, we process again with no webp conversion.
-            # Some source files have better png compression than webp
-            if original_size < newfile_size and do_convert_to_webp:
-                logger.warning(f"[{'Processing':13s}] New converted file is bigger than original file",
-                               extra=self._logging_extra)
-                os.remove(tmpname)
-                if not has_cover_action and not write_metadata:
-                    logger.warning(f"[{'Processing':13s}]  ⤷ Keeping original files. No additional processing left")
-                    return
-                logger.warning(f"[{'Processing':13s}]  ⤷ Cover action or new metadata detected. Processing new covers without converting source to webp")
-                with zipfile.ZipFile(tmpname, "w") as zout:  # The temp file where changes will be saved to
-                    self._recompress(zin, zout, write_metadata=write_metadata, do_convert_webp=False)
+            with ArchiveFile(self.file_path, 'r') as tmp_archive:
+                comicfile_not_appended = COMICINFO_FILE not in tmp_archive.namelist()
+            if comicfile_not_appended:
+                raise ValueError(f"Falied to append updated {COMICINFO_FILE} to {self.file_path}")
 
-        # Reset cover flags
-        self.cover_action = CoverActions.RESET
-        self.backcover_action = CoverActions.RESET
+            logger.debug(f"[{_LOG_TAG_WRITE_META:13s}] Updated ComicInfo.xml appended to the file",
+                            extra=self._logging_extra)
 
-        logger.debug(f"[{'Processing':13s}] Data from old file copied to new file",
-                               extra=self._logging_extra)
-        # Delete old file and rename new file to old name
-        try:
+        if not is_cbr:
+            # Creates a tempfile in the directory the original file is at
+            tmpfd, tmpname = tempfile.mkstemp(dir=os.path.dirname(self.file_path))
+            os.close(tmpfd)
+            has_cover_action = self.cover_action not in (CoverActions.RESET, None) or self.backcover_action not in (
+                CoverActions.RESET, None)
+            original_size = os.path.getsize(self.file_path)
             with ArchiveFile(self.file_path, 'r') as zin:
-                assert initial_file_count == len(zin.namelist())
-            os.remove(self.file_path)
-            os.rename(tmpname, self.file_path)
-            logger.debug(f"[{'Processing':13s}] Successfully deleted old file and named tempfile as the old file",
-                               extra=self._logging_extra)
-        # If we fail to delete original file we delete temp file effecively aborting the metadata update
-        except PermissionError:
-            logger.exception(f"[{'Processing':13s}] Permission error. Aborting and clearing temp files",
-                               extra=self._logging_extra)
-            os.remove(
-                tmpname)  # Could be moved to a 'finally'? Don't want to risk it not clearing temp files properly
-            raise
-        except FileNotFoundError:
+                initial_file_count = len(zin.namelist())
+                for s in zin.infolist():
+                    if s.file_size != 0:
+                        orig_comp_type = s.compress_type
+                        break
+
+                with zipfile.ZipFile(tmpname, "w",compression=orig_comp_type) as zout:  # The temp file where changes will be saved to
+                    self._recompress(zin, zout, write_metadata=write_metadata, do_convert_webp=do_convert_to_webp)
+                newfile_size = os.path.getsize(tmpname)
+
+                # If the new file is smaller than the original file, we process again with no webp conversion.
+                # Some source files have better png compression than webp
+                if original_size < newfile_size and do_convert_to_webp:
+                    logger.warning(f"[{'Processing':13s}] New converted file is bigger than original file",
+                                extra=self._logging_extra)
+                    os.remove(tmpname)
+                    if not has_cover_action and not write_metadata:
+                        logger.warning(f"[{'Processing':13s}]  ⤷ Keeping original files. No additional processing left")
+                        return
+                    logger.warning(f"[{'Processing':13s}]  ⤷ Cover action or new metadata detected. Processing new covers without converting source to webp")
+                    with zipfile.ZipFile(tmpname, "w") as zout:  # The temp file where changes will be saved to
+                        self._recompress(zin, zout, write_metadata=write_metadata, do_convert_webp=False)
+
+            # Reset cover flags
+            self.cover_action = CoverActions.RESET
+            self.backcover_action = CoverActions.RESET
+
+            logger.debug(f"[{'Processing':13s}] Data from old file copied to new file",
+                                extra=self._logging_extra)
+            # Delete old file and rename new file to old name
             try:
-                logger.exception(f"[{'Processing':13s}] File not found. Aborting and clearing temp files",
-                               extra=self._logging_extra)
-                os.remove(tmpname)
+                with ArchiveFile(self.file_path, 'r') as zin:
+                    assert initial_file_count == len(zin.namelist())
+                os.remove(self.file_path)
+                os.rename(tmpname, self.file_path)
+                logger.debug(f"[{'Processing':13s}] Successfully deleted old file and named tempfile as the old file",
+                                extra=self._logging_extra)
+            # If we fail to delete original file we delete temp file effecively aborting the metadata update
+            except PermissionError:
+                logger.exception(f"[{'Processing':13s}] Permission error. Aborting and clearing temp files",
+                                extra=self._logging_extra)
+                os.remove(
+                    tmpname)  # Could be moved to a 'finally'? Don't want to risk it not clearing temp files properly
+                raise
             except FileNotFoundError:
-                pass
-        except Exception:
-            logger.exception(f"[{'Processing':13s}] Unhandled exception. Create an issue so this gets investigated."
-                             f" Aborting and clearing temp files",
-                               extra=self._logging_extra)
-            os.remove(tmpname)
-            raise
+                try:
+                    logger.exception(f"[{'Processing':13s}] File not found. Aborting and clearing temp files",
+                                extra=self._logging_extra)
+                    os.remove(tmpname)
+                except FileNotFoundError:
+                    pass
+            except Exception:
+                logger.exception(f"[{'Processing':13s}] Unhandled exception. Create an issue so this gets investigated."
+                                f" Aborting and clearing temp files",
+                                extra=self._logging_extra)
+                os.remove(tmpname)
+                raise
 
-        self.original_cinfo_object = copy.copy(self.cinfo_object)
-        logger.info(f"[{'Processing':13s}] Successfully recompressed file",
-                               extra=self._logging_extra)
+            self.original_cinfo_object = copy.copy(self.cinfo_object)
+            logger.info(f"[{'Processing':13s}] Successfully recompressed file",
+                                extra=self._logging_extra)
 
-        if (self.cover_cache or self.backcover_cache) and has_cover_action:
-            logger.info("[{'Processing':13s}] Updating covers")
-            self.load_cover_info()
+            if (self.cover_cache or self.backcover_cache) and has_cover_action:
+                logger.info("[{'Processing':13s}] Updating covers")
+                self.load_cover_info()
 
     def _recompress(self, zin, zout, write_metadata, do_convert_webp):
         """
