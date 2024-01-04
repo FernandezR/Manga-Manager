@@ -52,9 +52,9 @@ class LoadedComicInfo(LoadedFileMetadata, LoadedFileCoverData, ILoadedComicInfo)
             self.load_metadata()
 
         if 'win' in sys.platform:
-            self.rar_bin = 'C:\Program Files\WinRAR\RAR.exe'
+            self.win_os = True
         else:
-            self.rar_bin = None
+            self.win_os = False
 
     def get_template_values(self) -> dict:
         """
@@ -157,7 +157,7 @@ class LoadedComicInfo(LoadedFileMetadata, LoadedFileCoverData, ILoadedComicInfo)
                 if self.rar_bin is None:
                     os.system(f"rar a '{self.file_path}' {COMICINFO_FILE}")
                 else:
-                    os.system(f'"{self.rar_bin}" a "{self.file_path}" {COMICINFO_FILE}')
+                    os.system(f'Rar.exe a "{self.file_path}" {COMICINFO_FILE}')
                 os.remove(COMICINFO_FILE)
 
                 with ArchiveFile(self.file_path, 'r') as tmp_archive:
@@ -176,7 +176,7 @@ class LoadedComicInfo(LoadedFileMetadata, LoadedFileCoverData, ILoadedComicInfo)
                 if self.rar_bin is None:
                     os.system(f"rar a '{self.file_path}' {COMICINFO_FILE}")
                 else:
-                    os.system(f'"{self.rar_bin}" a "{self.file_path}" {COMICINFO_FILE}')
+                    os.system(f'Rar.exe a "{self.file_path}" {COMICINFO_FILE}')
             os.remove(COMICINFO_FILE)
 
             with ArchiveFile(self.file_path, 'r') as tmp_archive:
