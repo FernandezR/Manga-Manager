@@ -50,6 +50,11 @@ class LoadedComicInfo(LoadedFileMetadata, LoadedFileCoverData, ILoadedComicInfo)
         if load_default_metadata:
             self.load_metadata()
 
+        if 'win' in sys.platform:
+            self.rar_bin = 'C:\Program Files\WinRAR\RAR.exe'
+        else:
+            self.rar_bin = None
+
     def get_template_values(self) -> dict:
         """
         Returns a dict with predefined values to fill in string templates
@@ -148,7 +153,10 @@ class LoadedComicInfo(LoadedFileMetadata, LoadedFileCoverData, ILoadedComicInfo)
                 with open(COMICINFO_FILE, 'w', newline="\n") as tmp_comicinfo:
                     tmp_comicinfo.write(self._export_metadata())
                 # subprocess.call(f"rar a '{self.file_path}' {COMICINFO_FILE}", shell = True)
-                os.system(f"rar a '{self.file_path}' {COMICINFO_FILE}")
+                if self.rar_bin is None:
+                    os.system(f"rar a '{self.file_path}' {COMICINFO_FILE}")
+                else:
+                    os.system(f"& '{self.rar_bin}' a '{self.file_path}' {COMICINFO_FILE}")
                 os.remove(COMICINFO_FILE)
 
                 with ArchiveFile(self.file_path, 'r') as tmp_archive:
@@ -164,7 +172,10 @@ class LoadedComicInfo(LoadedFileMetadata, LoadedFileCoverData, ILoadedComicInfo)
             with open(COMICINFO_FILE, 'w', newline="\n") as tmp_comicinfo:
                 tmp_comicinfo.write(self._export_metadata())
             # subprocess.call(f"rar a '{self.file_path}' {COMICINFO_FILE}", shell = True)
-            os.system(f"rar a '{self.file_path}' {COMICINFO_FILE}")
+                if self.rar_bin is None:
+                    os.system(f"rar a '{self.file_path}' {COMICINFO_FILE}")
+                else:
+                    os.system(f"& '{self.rar_bin}' a '{self.file_path}' {COMICINFO_FILE}")
             os.remove(COMICINFO_FILE)
 
             with ArchiveFile(self.file_path, 'r') as tmp_archive:
