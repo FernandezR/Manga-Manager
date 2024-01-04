@@ -154,7 +154,7 @@ class LoadedComicInfo(LoadedFileMetadata, LoadedFileCoverData, ILoadedComicInfo)
                 with open(COMICINFO_FILE, 'w', newline="\n") as tmp_comicinfo:
                     tmp_comicinfo.write(self._export_metadata())
                 # subprocess.call(f"rar a '{self.file_path}' {COMICINFO_FILE}", shell = True)
-                if self.rar_bin is None:
+                if not self.win_os:
                     os.system(f"rar a '{self.file_path}' {COMICINFO_FILE}")
                 else:
                     os.system(f'Rar.exe a "{self.file_path}" {COMICINFO_FILE}')
@@ -173,7 +173,7 @@ class LoadedComicInfo(LoadedFileMetadata, LoadedFileCoverData, ILoadedComicInfo)
             with open(COMICINFO_FILE, 'w', newline="\n") as tmp_comicinfo:
                 tmp_comicinfo.write(self._export_metadata())
             # subprocess.call(f"rar a '{self.file_path}' {COMICINFO_FILE}", shell = True)
-                if self.rar_bin is None:
+                if not self.win_os:
                     os.system(f"rar a '{self.file_path}' {COMICINFO_FILE}")
                 else:
                     os.system(f'Rar.exe a "{self.file_path}" {COMICINFO_FILE}')
