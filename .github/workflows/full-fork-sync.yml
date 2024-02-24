@@ -42,7 +42,7 @@ jobs:
         run: for i in `git branch -a | grep remote | grep -v HEAD | grep -v origin`; do git branch --track ${i#remotes/upstream/} $i || true && echo $i ; done
       -
         name: Merge local branches with upstream remotes and push to origin
-        run: for i in `git branch -a | grep remote | grep -v HEAD | grep -v origin`; do git checkout ${i#remotes/upstream/} && git merge --allow-unrelated-histories -m "Updating fork" $i && git push origin ${i#remotes/upstream/} && echo $i ; done
+        run: for i in `git branch -a | grep remote | grep -v HEAD | grep -v origin`; do git checkout ${i#remotes/upstream/} && git merge -m "Updating fork" $i && git push origin ${i#remotes/upstream/} && echo $i ; done
       -
         name: Fetch tags from upstream
         run: git fetch --tags upstream
