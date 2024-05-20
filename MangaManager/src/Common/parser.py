@@ -26,6 +26,8 @@ volume_patterns = [
 ]
 
 series_patterns = [
+    # Grand Blue Dreaming v01
+    re.compile(r'(?P<Series>.*)(\b|_|-|\s)(?:v)\d', re.IGNORECASE),
     # Grand Blue Dreaming - SP02
     re.compile(r'(?P<Series>.*)(\b|_|-|\s)(?:sp)\d', re.IGNORECASE),
     # [SugoiSugoi]_NEEDLESS_Vol.2_-_Disk_The_Informant_5_[ENG].rar, Yuusha Ga Shinda! - Vol.tbd Chapter 27.001 V2 Infection ①.cbz
