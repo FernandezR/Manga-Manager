@@ -74,7 +74,10 @@ class MMWidget(Frame):
         if value and validate_int(value):
             if self.validation == "rating" and (float(value) < 0 or float(value) > 10):
                 return
-            self.widget.set(str(int(value)))
+            try:
+                self.widget.set(str(int(value)))
+            except(ValueError):
+                self.widget.set(str(value))
 
     def set_default(self):
         self.widget.set("")

@@ -7,8 +7,8 @@ from .YesNo import YesNo
 from .ComicInfo import ComicInfo
 
 Formats = (
-    "", "Colored", "Special", "Reference", "Director's Cut", "Box Set", "Annual", "Anthology", "Epilogue", "One-Shot", "Prologue",
-    "TPB", "Trade Paper Back", "Omnibus", "Compendium", "Absolute", "Graphic Novel", "GN", "FCB"
+    "", "Colored", "Special", "Reference", "Director's Cut", "Perfect Edition", "Box Set", "Annual", "Anthology", "Epilogue", "One-Shot", "Prologue",
+    "TPB", "Trade Paper Back", "Omnibus", "Deluxe", "Compendium", "Absolute", "Graphic Novel", "GN", "FCB", "Raw"
 )
 
 PeopleTags = (

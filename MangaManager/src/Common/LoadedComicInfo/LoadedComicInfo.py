@@ -46,7 +46,8 @@ class LoadedComicInfo(LoadedFileMetadata, LoadedFileCoverData, ILoadedComicInfo)
 
         self.file_path = path or None
         self.file_name = None if path is None else os.path.basename(path)
-        logger.debug(f"[{'Loading File':13s}] '{self.file_name}'")
+        logger.info(f"[{'Loading File Path':13s}] '{self.file_path}'")
+        logger.info(f"[{'Loading File':13s}] '{self.file_name}'")
         self.cinfo_object = comicinfo
         if load_default_metadata:
             self.load_metadata()
@@ -153,11 +154,16 @@ class LoadedComicInfo(LoadedFileMetadata, LoadedFileCoverData, ILoadedComicInfo)
             else:
                 with open(COMICINFO_FILE, 'w', newline="\n") as tmp_comicinfo:
                     tmp_comicinfo.write(self._export_metadata())
+
                 # subprocess.call(f"rar a '{self.file_path}' {COMICINFO_FILE}", shell = True)
                 if not self.win_os:
                     os.system(f"rar a '{self.file_path}' {COMICINFO_FILE}")
                 else:
-                    os.system(f'Rar.exe a "{self.file_path}" {COMICINFO_FILE}')
+                    if "//" in self.file_path:
+                        updated_path = self.file_path.replace("/", "\\")
+                        os.system(f'Rar.exe a "{updated_path}" {COMICINFO_FILE}')
+                    else:
+                        os.system(f'Rar.exe a "{self.file_path}" {COMICINFO_FILE}')
                 os.remove(COMICINFO_FILE)
 
                 with ArchiveFile(self.file_path, 'r') as tmp_archive:
@@ -172,11 +178,16 @@ class LoadedComicInfo(LoadedFileMetadata, LoadedFileCoverData, ILoadedComicInfo)
         elif is_cbr and write_metadata and self.has_metadata:
             with open(COMICINFO_FILE, 'w', newline="\n") as tmp_comicinfo:
                 tmp_comicinfo.write(self._export_metadata())
+
             # subprocess.call(f"rar a '{self.file_path}' {COMICINFO_FILE}", shell = True)
             if not self.win_os:
                 os.system(f"rar a '{self.file_path}' {COMICINFO_FILE}")
             else:
-                os.system(f'Rar.exe a "{self.file_path}" {COMICINFO_FILE}')
+                if "//" in self.file_path:
+                    updated_path = self.file_path.replace("/", "\\")
+                    os.system(f'Rar.exe a "{updated_path}" {COMICINFO_FILE}')
+                else:
+                    os.system(f'Rar.exe a "{self.file_path}" {COMICINFO_FILE}')
             os.remove(COMICINFO_FILE)
 
             with ArchiveFile(self.file_path, 'r') as tmp_archive:
