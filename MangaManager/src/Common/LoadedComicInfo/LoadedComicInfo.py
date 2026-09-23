@@ -138,7 +138,7 @@ class LoadedComicInfo(LoadedFileMetadata, LoadedFileCoverData, ILoadedComicInfo)
     # ACTUAL LOGIC
     def _process(self, write_metadata=False, do_convert_to_webp=False, **_):
         logger.info(f"[{'PROCESSING':13s}] Processing file '{self.file_path}'")
-        
+
         ext = os.path.splitext(self.file_path)[1].lower()
         if ext in ('.cbr', '.rar'):
             is_cbr = True
@@ -152,7 +152,7 @@ class LoadedComicInfo(LoadedFileMetadata, LoadedFileCoverData, ILoadedComicInfo)
                     logger.debug(f"[{_LOG_TAG_WRITE_META:13s}] New ComicInfo.xml appended to the file",
                                 extra=self._logging_extra)
             else:
-                with open(COMICINFO_FILE, 'w', newline="\n") as tmp_comicinfo:
+                with open(COMICINFO_FILE, 'w', encoding='utf-8', newline="\n") as tmp_comicinfo:
                     tmp_comicinfo.write(self._export_metadata())
 
                 # subprocess.call(f"rar a '{self.file_path}' {COMICINFO_FILE}", shell = True)
@@ -176,7 +176,7 @@ class LoadedComicInfo(LoadedFileMetadata, LoadedFileCoverData, ILoadedComicInfo)
             self.has_metadata = True
 
         elif is_cbr and write_metadata and self.has_metadata:
-            with open(COMICINFO_FILE, 'w', newline="\n") as tmp_comicinfo:
+            with open(COMICINFO_FILE, 'w', encoding='utf-8', newline="\n") as tmp_comicinfo:
                 tmp_comicinfo.write(self._export_metadata())
 
             # subprocess.call(f"rar a '{self.file_path}' {COMICINFO_FILE}", shell = True)

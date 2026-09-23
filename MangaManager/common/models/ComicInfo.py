@@ -1,5 +1,55 @@
 from io import BytesIO
 from xml.etree import ElementTree as ET
+import unicodedata
+
+
+def sanitize_for_xml(text):
+    """
+    Sanitize text to ensure it can be properly encoded in XML.
+    Replaces problematic Unicode characters with their ASCII equivalents or removes them.
+
+    :param text: The text to sanitize
+    :return: Sanitized text safe for XML encoding
+    """
+    if not text or not isinstance(text, str):
+        return text
+
+    # Dictionary of common problematic Unicode characters and their replacements
+    replacements = {
+        '\u2018': "'",  # Left single quotation mark
+        '\u2019': "'",  # Right single quotation mark
+        '\u201c': '"',  # Left double quotation mark
+        '\u201d': '"',  # Right double quotation mark
+        '\u2013': '-',  # En dash
+        '\u2014': '-',  # Em dash
+        '\u2026': '...',  # Horizontal ellipsis
+        '\u00a0': ' ',  # Non-breaking space
+        '\u2022': '*',  # Bullet
+        '\u00ad': '',   # Soft hyphen (remove)
+        '\u200b': '',   # Zero width space (remove)
+        '\u200c': '',   # Zero width non-joiner (remove)
+        '\u200d': '',   # Zero width joiner (remove)
+        '\ufeff': '',   # Zero width no-break space / BOM (remove)
+    }
+
+    # Replace known problematic characters
+    for unicode_char, replacement in replacements.items():
+        text = text.replace(unicode_char, replacement)
+
+    # Normalize the text to handle composed/decomposed characters
+    text = unicodedata.normalize('NFC', text)
+
+    # Remove any remaining characters that can't be encoded in UTF-8
+    # This uses 'replace' error handler which replaces unencodable chars with ?
+    try:
+        # Try to encode and decode to catch any remaining issues
+        text = text.encode('utf-8', errors='ignore').decode('utf-8')
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        # If still having issues, fall back to ASCII with replacement
+        text = text.encode('ascii', errors='replace').decode('ascii')
+
+    return text
+
 
 comic_info_tag_map = {
     "series": "Series",
@@ -132,7 +182,9 @@ class ComicInfo:
         for key, mapped_key in comic_info_tag_map.items():
             value = str(self.get_by_tag_name(mapped_key))
             if value:
-                ET.SubElement(root, mapped_key).text = value
+                # Sanitize the value to prevent encoding issues
+                sanitized_value = sanitize_for_xml(value)
+                ET.SubElement(root, mapped_key).text = sanitized_value
 
         # prevent creation of self-closing tags
         for node in root.iter():

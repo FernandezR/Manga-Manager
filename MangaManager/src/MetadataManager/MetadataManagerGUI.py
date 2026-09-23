@@ -153,12 +153,23 @@ class GUIApp(Tk, MetadataManagerLib):
         # Open select files dialog
 
         folder_path = askdirectory(initialdir=initial_dir)
-        self.selected_files_path = glob.glob(root_dir=folder_path, pathname=os.path.join(folder_path, "**/*.cbz"),
-                                             recursive=True)
-        self.selected_files_path.extend(glob.glob(root_dir=folder_path, pathname=os.path.join(folder_path, "**/*.cbr"),
-                                                  recursive=True))
-        # TODO: Auto select recursive or not
-        # self.selected_files_path = [str(Path(folder_path, file)) for file in os.listdir(folder_path) if file.endswith(".cbz")]
+        # Escape special characters in folder path to prevent glob from treating them as patterns
+        escaped_folder_path = glob.escape(folder_path)
+
+        # Check setting for recursive folder loading
+        include_subfolders = Settings().get(SettingHeading.Main, 'include_subfolders_on_folder_select')
+
+        if include_subfolders:
+            # Include all subfolders
+            pattern_cbz = os.path.join(escaped_folder_path, "**/*.cbz")
+            pattern_cbr = os.path.join(escaped_folder_path, "**/*.cbr")
+        else:
+            # Only root folder
+            pattern_cbz = os.path.join(escaped_folder_path, "*.cbz")
+            pattern_cbr = os.path.join(escaped_folder_path, "*.cbr")
+
+        self.selected_files_path = glob.glob(root_dir=folder_path, pathname=pattern_cbz, recursive=include_subfolders)
+        self.selected_files_path.extend(glob.glob(root_dir=folder_path, pathname=pattern_cbr, recursive=include_subfolders))
         self.load_selected_files()
 
     def load_selected_files(self,new_selection:list=None,is_event_dragdrop = False):
