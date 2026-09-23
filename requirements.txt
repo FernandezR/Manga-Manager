@@ -1,16 +1,11 @@
-prompt_toolkit>=3.0.31
-pillow>=9.4.0
-Pillow
-natsort>=8.2.0
-lxml >= 4.9.1
-six >= 1.16.0
-requests >= 2.31.0
-anytree~=2.8.0
-numpy~=1.24.2
+anytree
+lxml
+natsort
+numpy
+pillow
+prompt_toolkit
 rarfile
+requests
+setuptools
+six
 tkinterdnd2
-
-# python3.11
-# sudo apt-get install idle-python3.11
-# sudo apt install python3.11-tk
-# sudo apt install unifont
